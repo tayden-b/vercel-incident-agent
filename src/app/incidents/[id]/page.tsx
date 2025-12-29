@@ -139,19 +139,21 @@ export default function IncidentDetail() {
 
                             {incident.analysis ? (
                                 <div className="space-y-6">
-                                    <div className="bg-green-50 border border-green-200 rounded-lg p-4 flex items-start space-x-3 mb-6">
-                                        <div className="bg-green-100 rounded-full p-1 mt-0.5">
-                                            <svg className="w-4 h-4 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                                            </svg>
+                                    {(incident.status === 'NOTIFIED' || incident.status === 'REDEPLOY_TRIGGERED') && (
+                                        <div className="bg-green-50 border border-green-200 rounded-lg p-4 flex items-start space-x-3 mb-6">
+                                            <div className="bg-green-100 rounded-full p-1 mt-0.5">
+                                                <svg className="w-4 h-4 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                                </svg>
+                                            </div>
+                                            <div>
+                                                <h4 className="text-sm font-bold text-green-900">Approval Link Sent to Gmail</h4>
+                                                <p className="text-xs text-green-700 mt-1">
+                                                    An email with secure approval and redeployment links has been sent to the registered Google Workspace account. Check your inbox to authorize the fix.
+                                                </p>
+                                            </div>
                                         </div>
-                                        <div>
-                                            <h4 className="text-sm font-bold text-green-900">Approval Link Sent to Gmail</h4>
-                                            <p className="text-xs text-green-700 mt-1">
-                                                An email with secure approval and redeployment links has been sent to the registered Google Workspace account. Check your inbox to authorize the fix.
-                                            </p>
-                                        </div>
-                                    </div>
+                                    )}
 
                                     <div>
                                         <h3 className="text-sm font-semibold uppercase tracking-wider text-gray-400 mb-2">Summary</h3>

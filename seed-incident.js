@@ -43,7 +43,7 @@ async function main() {
         data: {
             errorSignature: 'API_TIMEOUT_504',
             title: 'API Timeout (504) on /api/users',
-            status: 'OPEN',
+            status: 'NOTIFIED',
             severity: 'P1',
             deploymentId: deployment.id,
             requestPath: '/api/users',
