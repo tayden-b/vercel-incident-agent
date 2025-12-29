@@ -1,36 +1,65 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Vercel Incident Agent
 
-## Getting Started
+An autonomous DevOps agent that monitors Vercel deployments, analyzes runtime errors using AI, and facilitates one-click fixes via secure email loops.
 
-First, run the development server:
+![Dashboard Preview](dashboard_preview.png)
+*(Note: You can add a screenshot here if you have one, or remove this line)*
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+## Overview
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+This project solves the "on-call" problem for solo developers. Instead of manually digging through logs when things break, this agent acts as a always-on SRE team member. It detects critical issues in real-time, diagnoses them using LLMs, and presents you with a clear solution.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### Key Features
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+*   **Autopilot Monitoring**: Polls Vercel runtime logs for 500-level errors on a cron schedule.
+*   **Intelligent De-duplication**: Groups thousands of log lines into distinct "Incidents" based on error signatures.
+*   **AI Root Cause Analysis**: Uses GPT-4o-mini to analyze stack traces and suggest specific fixes (e.g., "Increase DB connection limit").
+*   **Human-in-the-Loop**: Sends a formatted email with a "Redeploy" button. No need to open the Vercel dashboard.
+*   **Secure Actions**: Email links use hashed, single-use tokens to trigger API actions safely.
 
-## Learn More
+## Architecture
 
-To learn more about Next.js, take a look at the following resources:
+1.  **Ingestion**: A Next.js API route (`/api/cron/poll-logs`) fetches recent logs from Vercel.
+2.  **Processing**: Logs are structured, hashed, and stored in a SQLite database via Prisma.
+3.  **Analysis**: New incidents trigger an LLM analysis job.
+4.  **Notification**: The system generates an HTML report and emails it via Gmail API.
+5.  **Resolution**: The developer clicks a link to approve the fix, triggering a Vercel redeploy via API.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Tech Stack
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+*   **Core**: Next.js 14 (App Router), TypeScript
+*   **Database**: SQLite + Prisma ORM
+*   **AI**: OpenAI API
+*   **Integrations**: Vercel SDK, Googleapis (Gmail)
+*   **UI**: Tailwind CSS, Lucide Icons
 
-## Deploy on Vercel
+## Setup
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+1.  **Clone & Install**:
+    ```bash
+    git clone https://github.com/tayden-b/vercel-incident-agent.git
+    cd vercel-incident-agent
+    npm install
+    ```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+2.  **Environment Variables**:
+    Copy `.env.example` to `.env` and fill in your keys:
+    *   `VERCEL_TOKEN` & `VERCEL_PROJECT_ID`: For log access.
+    *   `LLM_API_KEY`: OpenAI key.
+    *   `GMAIL_CLIENT_ID` etc.: For sending emails (optional, console logs used as fallback).
+
+3.  **Run Locally**:
+    ```bash
+    npm run dev
+    ```
+    The cron job can be triggered manually at `http://localhost:3000/api/cron/poll-logs`.
+
+## Database
+
+This project uses a local SQLite database for simplicity.
+*   `npx prisma studio`: View the data.
+*   `npx prisma db push`: Sync schema changes.
+
+## License
+
+MIT

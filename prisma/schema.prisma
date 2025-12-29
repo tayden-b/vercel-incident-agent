@@ -1,0 +1,91 @@
+generator client {
+  provider        = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model Setting {
+  id                   String   @id @default("singleton")
+  vercelProjectId      String
+  vercelTeamId         String?
+  vercelTeamSlug       String?
+  pollIntervalMinutes  Int      @default(5)
+  lastPollAt           DateTime?
+  updatedAt            DateTime @updatedAt
+}
+
+model Deployment {
+  id                         String     @id @default(cuid())
+  vercelDeploymentId         String     @unique
+  target                     String     @default("production")
+  createdAt                  DateTime   @default(now())
+  lastPolledAt               DateTime?
+  lastProcessedTimestampInMs BigInt?
+  incidents                  Incident[]
+}
+
+model Incident {
+  id                 String          @id @default(cuid())
+  errorSignature     String
+  title              String
+  status             String          @default("OPEN") // OPEN, NOTIFIED, APPROVED_REDEPLOY, DISMISSED, REDEPLOY_TRIGGERED, RESOLVED
+  severity           String          @default("P1")   // P0, P1, P2
+  deploymentId       String
+  deployment         Deployment      @relation(fields: [deploymentId], references: [id])
+  requestPath        String?
+  firstSeenAt        DateTime        @default(now())
+  lastSeenAt         DateTime        @default(now())
+  eventCount         Int             @default(1)
+  analysis           Analysis?       @relation(fields: [analysisId], references: [id])
+  analysisId         String?
+  events             IncidentEvent[]
+  approvals          Approval[]
+  
+  @@index([errorSignature])
+  @@index([status])
+}
+
+model IncidentEvent {
+  id                 String   @id @default(cuid())
+  incidentId         String
+  incident           Incident @relation(fields: [incidentId], references: [id])
+  rowId              String   @unique
+  timestampInMs      BigInt
+  level              String
+  source             String?
+  message            String
+  requestMethod      String?
+  requestPath        String?
+  responseStatusCode Int?
+  createdAt          DateTime @default(now())
+
+  @@index([incidentId])
+}
+
+model Analysis {
+  id                String     @id @default(cuid())
+  errorSignature    String     @unique
+  summary           String
+  likelyCausesJson  String     // Store as JSON string
+  recommendedAction String
+  nextStepsJson     String     // Store as JSON string
+  modelUsed         String
+  createdAt         DateTime   @default(now())
+  incidents         Incident[]
+}
+
+model Approval {
+  id             String    @id @default(cuid())
+  incidentId     String
+  incident       Incident  @relation(fields: [incidentId], references: [id])
+  tokenHash      String    @unique
+  tokenExpiresAt DateTime
+  usedAt         DateTime?
+  action         String    // approve, dismiss
+  createdAt      DateTime  @default(now())
+
+  @@index([incidentId])
+}
