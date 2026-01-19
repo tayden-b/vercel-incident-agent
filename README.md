@@ -1,9 +1,6 @@
 # Vercel Incident Agent
 
-An autonomous DevOps agent that monitors Vercel deployments, analyzes runtime errors using AI, and facilitates one-click fixes via secure email loops.
-
-![Dashboard Preview](dashboard_preview.png)
-*(Note: You can add a screenshot here if you have one, or remove this line)*
+An autonomous DevOps agent that monitors Vercel deployments, analyzes runtime errors using AI, and facilitates one-click fixes via secure email loops. This is my first project utilizing Claude code for a language I'm not familiar with. 
 
 ## Overview
 
