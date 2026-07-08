@@ -41,3 +41,9 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# local sqlite database (created by `prisma db push`)
+dev.db
+prisma/dev.db
+*.db
+*.db-journal

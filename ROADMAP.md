@@ -14,9 +14,6 @@ is to make it trustworthy, not bigger.
 
 ## Next up
 
-- [ ] Repo hygiene: remove the committed SQLite files (`dev.db`,
-      `prisma/dev.db`) and one-off scripts (`test-db.js`) from the repo,
-      gitignore the db paths, document `prisma db push` as the setup step.
 - [ ] Tests for the incident-signature/de-dup logic in `src/lib/incident.ts`
       — same error twice groups, different stack doesn't, boundary cases.
       This is the logic the whole tool rests on.
@@ -38,4 +35,6 @@ is to make it trustworthy, not bigger.
 
 ## Done
 
-Nothing yet — file added 2026-07-02.
+- [x] Repo hygiene: removed the committed SQLite files (`dev.db`,
+      `prisma/dev.db`) and the one-off `test-db.js` script, gitignored the db
+      paths, documented `prisma db push` as the setup step. (2026-07-08)

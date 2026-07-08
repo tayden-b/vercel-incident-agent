@@ -45,7 +45,14 @@ This project solves the "on-call" problem for solo developers. Instead of manual
     *   `LLM_API_KEY`: OpenAI key.
     *   `GMAIL_CLIENT_ID` etc.: For sending emails (optional, console logs used as fallback).
 
-3.  **Run Locally**:
+3.  **Set Up the Database**:
+    The SQLite database is not committed. Create it from the Prisma schema:
+    ```bash
+    npx prisma db push
+    ```
+    This writes `prisma/dev.db` locally. Re-run it after any schema change.
+
+4.  **Run Locally**:
     ```bash
     npm run dev
     ```
@@ -53,9 +60,10 @@ This project solves the "on-call" problem for solo developers. Instead of manual
 
 ## Database
 
-This project uses a local SQLite database for simplicity.
+This project uses a local SQLite database for simplicity. The `.db` file is
+gitignored, so each clone starts from `prisma db push`.
+*   `npx prisma db push`: Create the database / sync schema changes.
 *   `npx prisma studio`: View the data.
-*   `npx prisma db push`: Sync schema changes.
 
 ## License
 
