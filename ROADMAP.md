@@ -14,9 +14,6 @@ is to make it trustworthy, not bigger.
 
 ## Next up
 
-- [ ] Tests for the incident-signature/de-dup logic in `src/lib/incident.ts`
-      — same error twice groups, different stack doesn't, boundary cases.
-      This is the logic the whole tool rests on.
 - [ ] CI: typecheck + lint + tests on push.
 - [ ] Slack webhook as an alert channel alongside Gmail — one env var instead
       of OAuth setup, which makes the project runnable by anyone in minutes.
@@ -35,6 +32,14 @@ is to make it trustworthy, not bigger.
 
 ## Done
 
+- [x] Tests for the incident-signature/de-dup logic. Moved `generateSignature`
+      and `redactMessage` out of `src/lib/incident.ts` into `src/lib/signature.ts`
+      so they test without dragging in the Prisma client, then added
+      `signature.test.ts` (vitest): same error groups, different stack doesn't,
+      numeric ids and UUIDs collapse, path is part of the key, and the 500-char
+      cap groups long stacks that share a head. Writing them surfaced one real
+      quirk — a number glued to letters (`1200ms`) isn't normalized because
+      `\b\d+\b` needs a boundary on both sides. (2026-07-11)
 - [x] Repo hygiene: removed the committed SQLite files (`dev.db`,
       `prisma/dev.db`) and the one-off `test-db.js` script, gitignored the db
       paths, documented `prisma db push` as the setup step. (2026-07-08)
