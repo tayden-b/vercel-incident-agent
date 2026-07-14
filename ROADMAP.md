@@ -14,7 +14,6 @@ is to make it trustworthy, not bigger.
 
 ## Next up
 
-- [ ] CI: typecheck + lint + tests on push.
 - [ ] Slack webhook as an alert channel alongside Gmail — one env var instead
       of OAuth setup, which makes the project runnable by anyone in minutes.
 - [ ] Harden the action tokens: expiry and enforced single-use on the
@@ -32,6 +31,13 @@ is to make it trustworthy, not bigger.
 
 ## Done
 
+- [x] CI: typecheck + lint + tests on push (`.github/workflows/ci.yml`, runs on
+      push and PR). Getting the checks green meant clearing the debt they
+      surfaced: a real `bigint`/`number` mismatch in `agent.ts`, ~20 `no-explicit-any`
+      lint errors (mostly `catch (error: any)` and untyped fetch state — replaced
+      with a shared `src/lib/types.ts` for the incident shapes), a `@ts-ignore`
+      that should have been `@ts-expect-error`, and unescaped quotes in JSX. Left
+      the unused-import warnings alone — they don't fail the build. (2026-07-14)
 - [x] Tests for the incident-signature/de-dup logic. Moved `generateSignature`
       and `redactMessage` out of `src/lib/incident.ts` into `src/lib/signature.ts`
       so they test without dragging in the Prisma client, then added

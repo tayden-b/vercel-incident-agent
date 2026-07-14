@@ -22,7 +22,7 @@ export async function analyzeIncident(signature: string, evidence: string[]): Pr
         return {
             summary: cached.summary,
             likely_causes: JSON.parse(cached.likelyCausesJson),
-            recommended_action: cached.recommendedAction as any,
+            recommended_action: cached.recommendedAction as AnalysisResult['recommended_action'],
             next_steps: JSON.parse(cached.nextStepsJson),
             risk_notes: [], // Cache doesn't store this in MVP schema but could be added
         };
@@ -91,7 +91,7 @@ Output JSON strictly:
         });
 
         return result;
-    } catch (error: any) {
+    } catch (error) {
         console.error('LLM Analysis failed:', error);
         return {
             summary: "LLM analysis failed due to an error.",
