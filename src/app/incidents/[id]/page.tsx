@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { ChevronLeft, Clock, AlertCircle, Activity, Shield, ExternalLink, ArrowRight } from 'lucide-react';
 import { useParams, useRouter } from 'next/navigation';
+import type { Incident, IncidentEvent, LikelyCause } from '@/lib/types';
 
 // In Next.js 15+, params is async but often populated. 
 // SAFEST FIX: Use React.use() if available or just check if it's ready. 
@@ -18,7 +19,7 @@ export default function IncidentDetail() {
     const { id } = useParams();
     const router = useRouter();
 
-    const [incident, setIncident] = useState<any>(null);
+    const [incident, setIncident] = useState<Incident | null>(null);
     const [loading, setLoading] = useState(true);
     const [actionPending, setActionPending] = useState(false);
 
@@ -45,7 +46,7 @@ export default function IncidentDetail() {
             });
             const data = await res.json();
             if (data.success) {
-                setIncident({ ...incident, status: data.status });
+                setIncident(prev => prev ? { ...prev, status: data.status } : prev);
             }
         } catch (e) {
             console.error(e);
@@ -78,7 +79,7 @@ export default function IncidentDetail() {
                     <p><strong>Recommended Action:</strong> ${recommendedAction}</p>
                     <h4>Likely Causes:</h4>
                     <ul>
-                        ${likelyCauses.map((c: any) => `<li><strong>${c.cause}</strong> (Confidence: ${(c.confidence * 100).toFixed(0)}%)<br/><em>Evidence: ${c.evidence}</em></li>`).join('')}
+                        ${likelyCauses.map((c: LikelyCause) => `<li><strong>${c.cause}</strong> (Confidence: ${(c.confidence * 100).toFixed(0)}%)<br/><em>Evidence: ${c.evidence}</em></li>`).join('')}
                     </ul>
                     <hr style="border: 0; border-top: 1px solid #e5e7eb; margin: 20px 0;" />
                     <div style="margin-top: 20px;">
@@ -162,7 +163,7 @@ export default function IncidentDetail() {
 
                                     <div className="grid grid-cols-1 gap-4">
                                         <h3 className="text-sm font-semibold uppercase tracking-wider text-gray-400">Likely Causes</h3>
-                                        {JSON.parse(incident.analysis.likelyCausesJson).map((cause: any, idx: number) => (
+                                        {JSON.parse(incident.analysis.likelyCausesJson).map((cause: LikelyCause, idx: number) => (
                                             <div key={idx} className="p-4 bg-gray-50 rounded-xl border border-gray-100">
                                                 <div className="flex items-center justify-between mb-1">
                                                     <span className="font-bold text-gray-900">{cause.cause}</span>
@@ -170,7 +171,7 @@ export default function IncidentDetail() {
                                                         {(cause.confidence * 100).toFixed(0)}% Confidence
                                                     </span>
                                                 </div>
-                                                <p className="text-xs text-gray-500 italic mt-2 font-mono">"{cause.evidence}"</p>
+                                                <p className="text-xs text-gray-500 italic mt-2 font-mono">&ldquo;{cause.evidence}&rdquo;</p>
                                             </div>
                                         ))}
                                     </div>
@@ -209,7 +210,7 @@ export default function IncidentDetail() {
                                 <span className="text-xs font-bold uppercase text-gray-400">{incident.eventCount} Events</span>
                             </div>
                             <div className="divide-y divide-gray-50 max-h-[600px] overflow-y-auto font-mono text-xs">
-                                {incident.events && (incident.events || []).map((event: any) => (
+                                {incident.events && (incident.events || []).map((event: IncidentEvent) => (
                                     <div key={event.id} className="p-4 hover:bg-gray-50 transition-colors">
                                         <div className="flex items-center space-x-3 mb-2">
                                             <span className="text-gray-400 tabular-nums">{new Date(event.timestampInMs).toISOString()}</span>

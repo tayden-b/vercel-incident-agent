@@ -65,7 +65,7 @@ export async function runAgent() {
 
     for (const incident of newIncidents) {
         // 6. Run Analysis
-        const evidence = incident.events.map((e: { timestampInMs: number, message: string }) => `[${new Date(e.timestampInMs).toISOString()}] ${e.message}`);
+        const evidence = incident.events.map((e: { timestampInMs: bigint, message: string }) => `[${new Date(Number(e.timestampInMs)).toISOString()}] ${e.message}`);
         const analysis = await analyzeIncident(incident.errorSignature, evidence);
 
         // 7. Update incident with analysis

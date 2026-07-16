@@ -4,7 +4,10 @@ const globalForPrisma = globalThis as unknown as {
     prisma: PrismaClient | undefined
 }
 
-// @ts-ignore
+// Prisma returns BigInt for the log timestamps; make them JSON-serializable.
+declare global {
+    interface BigInt { toJSON(): number }
+}
 BigInt.prototype.toJSON = function () { return Number(this) }
 
 export const db = globalForPrisma.prisma ?? new PrismaClient()

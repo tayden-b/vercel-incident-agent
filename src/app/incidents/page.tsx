@@ -3,9 +3,10 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { ChevronLeft, Clock, AlertCircle, ExternalLink, Activity, Info } from 'lucide-react';
+import type { Incident } from '@/lib/types';
 
 export default function IncidentList() {
-    const [incidents, setIncidents] = useState<any[]>([]);
+    const [incidents, setIncidents] = useState<Incident[]>([]);
     const [loading, setLoading] = useState(true);
 
     async function fetchIncidents() {

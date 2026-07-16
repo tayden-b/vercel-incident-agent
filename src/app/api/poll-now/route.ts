@@ -5,8 +5,9 @@ export async function POST() {
     try {
         const result = await runAgent();
         return NextResponse.json(result);
-    } catch (error: any) {
+    } catch (error) {
         console.error('Manual poll failed:', error);
-        return NextResponse.json({ error: error.message }, { status: 500 });
+        const message = error instanceof Error ? error.message : 'Unknown error';
+        return NextResponse.json({ error: message }, { status: 500 });
     }
 }

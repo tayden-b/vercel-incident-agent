@@ -3,9 +3,10 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { AlertCircle, Clock, RefreshCw, Layers, Shield } from 'lucide-react';
+import type { Incident } from '@/lib/types';
 
 export default function Dashboard() {
-  const [incidents, setIncidents] = useState<any[]>([]);
+  const [incidents, setIncidents] = useState<Incident[]>([]);
   const [loading, setLoading] = useState(true);
   const [polling, setPolling] = useState(false);
 
@@ -118,7 +119,7 @@ export default function Dashboard() {
               <div className="p-12 text-center text-red-500">Failed to load incidents.</div>
             ) : (
               <div className="divide-y divide-gray-100">
-                {incidents.slice(0, 5).map((incident: any) => (
+                {incidents.slice(0, 5).map((incident) => (
                   <Link key={incident.id} href={`/incidents/${incident.id}`} className="block p-5 hover:bg-gray-50 transition-colors">
                     <div className="flex items-start justify-between">
                       <div className="space-y-1">
