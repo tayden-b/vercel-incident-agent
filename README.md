@@ -44,6 +44,7 @@ This project solves the "on-call" problem for solo developers. Instead of manual
     *   `VERCEL_TOKEN` & `VERCEL_PROJECT_ID`: For log access.
     *   `LLM_API_KEY`: OpenAI key.
     *   `GMAIL_CLIENT_ID` etc.: For sending emails (optional, console logs used as fallback).
+    *   `SLACK_WEBHOOK_URL`: An incoming-webhook URL to also post alerts to Slack (optional, no OAuth needed). Set either or both channels; unset channels are skipped and logged to the console.
 
 3.  **Set Up the Database**:
     The SQLite database is not committed. Create it from the Prisma schema:
