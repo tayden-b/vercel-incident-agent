@@ -3,6 +3,7 @@ import { getLatestDeployment, getLogsStream } from './vercel';
 import { processLogs } from './incident';
 import { analyzeIncident } from './llm';
 import { sendEmail } from './gmail';
+import { sendSlackAlert } from './slack';
 import crypto from 'crypto';
 
 export async function runAgent() {
@@ -115,11 +116,27 @@ export async function runAgent() {
       <p style="margin-top: 20px;"><small>Signature: ${incident.errorSignature}</small></p>
     `;
 
-        await sendEmail({
-            to: process.env.NOTIFY_TO_EMAIL || '',
-            subject: `[Incident] ${incident.title.slice(0, 50)}`,
-            html: emailHtml,
-        });
+        // Send both configured channels; a failure in one shouldn't block the
+        // other or stop the incident from being marked notified.
+        const alerts = await Promise.allSettled([
+            sendEmail({
+                to: process.env.NOTIFY_TO_EMAIL || '',
+                subject: `[Incident] ${incident.title.slice(0, 50)}`,
+                html: emailHtml,
+            }),
+            sendSlackAlert({
+                title: incident.title,
+                requestPath: incident.requestPath,
+                eventCount: incident.eventCount,
+                errorSignature: incident.errorSignature,
+                analysis,
+                approveUrl,
+                dismissUrl,
+            }),
+        ]);
+        for (const result of alerts) {
+            if (result.status === 'rejected') console.error('Alert channel failed:', result.reason);
+        }
 
         // 10. Mark as NOTIFIED
         await db.incident.update({

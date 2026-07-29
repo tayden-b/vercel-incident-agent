@@ -14,8 +14,6 @@ is to make it trustworthy, not bigger.
 
 ## Next up
 
-- [ ] Slack webhook as an alert channel alongside Gmail — one env var instead
-      of OAuth setup, which makes the project runnable by anyone in minutes.
 - [ ] Harden the action tokens: expiry and enforced single-use on the
       approve/dismiss links, with a test proving a replayed token fails.
 - [ ] Screenshots (or a short GIF) of the incident dashboard and the alert
@@ -31,6 +29,14 @@ is to make it trustworthy, not bigger.
 
 ## Done
 
+- [x] Slack webhook as an alert channel alongside Gmail. `src/lib/slack.ts`
+      posts a Block Kit message (summary, likely causes, approve/dismiss link
+      buttons) to `SLACK_WEBHOOK_URL` — one env var, no OAuth; unset falls back
+      to a console log, same as Gmail. The agent now fires both channels via
+      `Promise.allSettled` so one failing doesn't block the other or stop the
+      incident being marked notified. Split the payload into a pure
+      `buildSlackMessage` so `slack.test.ts` asserts the button URLs, cause
+      rendering, and title truncation with no network. (2026-07-18)
 - [x] CI: typecheck + lint + tests on push (`.github/workflows/ci.yml`, runs on
       push and PR). Getting the checks green meant clearing the debt they
       surfaced: a real `bigint`/`number` mismatch in `agent.ts`, ~20 `no-explicit-any`
