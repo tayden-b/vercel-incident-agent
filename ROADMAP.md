@@ -14,8 +14,6 @@ is to make it trustworthy, not bigger.
 
 ## Next up
 
-- [ ] Harden the action tokens: expiry and enforced single-use on the
-      approve/dismiss links, with a test proving a replayed token fails.
 - [ ] Screenshots (or a short GIF) of the incident dashboard and the alert
       email in the README — this project demos visually or not at all.
 
@@ -29,6 +27,19 @@ is to make it trustworthy, not bigger.
 
 ## Done
 
+- [x] Hardened the action tokens. Minting and redemption moved out of the two
+      route handlers into `src/lib/approval-token.ts`, so they test without the
+      Prisma client (same trick as `signature.ts`). The expiry and single-use
+      checks were already there but were a read-then-write: two clicks on the
+      same link could both pass the `usedAt` check and both fire a redeploy.
+      Redemption is now a conditional `updateMany` on `usedAt: null` +
+      unexpired, and only a `count` of 1 counts as a claim.
+      `approval-token.test.ts` covers the replay case the item asked for, plus
+      two simultaneous claims racing (exactly one wins), expiry, a token aimed
+      at another incident, and an unknown token. The `action` column now starts
+      at `pending` and records which link was actually clicked — the approve
+      route used to reject anything not already marked `approve` while the
+      dismiss route quietly rewrote it. (2026-08-03)
 - [x] Slack webhook as an alert channel alongside Gmail. `src/lib/slack.ts`
       posts a Block Kit message (summary, likely causes, approve/dismiss link
       buttons) to `SLACK_WEBHOOK_URL` — one env var, no OAuth; unset falls back

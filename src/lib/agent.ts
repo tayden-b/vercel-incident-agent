@@ -4,6 +4,7 @@ import { processLogs } from './incident';
 import { analyzeIncident } from './llm';
 import { sendEmail } from './gmail';
 import { sendSlackAlert } from './slack';
+import { mintActionToken } from './approval-token';
 import crypto from 'crypto';
 
 export async function runAgent() {
@@ -77,16 +78,14 @@ export async function runAgent() {
         });
 
         // 8. Generate Approval Token
-        const token = crypto.randomBytes(32).toString('hex');
-        const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
-        const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24h
+        const { token, tokenHash, expiresAt } = mintActionToken();
 
         await db.approval.create({
             data: {
                 incidentId: incident.id,
                 tokenHash,
                 tokenExpiresAt: expiresAt,
-                action: 'approve',
+                action: 'pending',
             },
         });
 
