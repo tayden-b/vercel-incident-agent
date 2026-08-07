@@ -84,7 +84,7 @@ model Approval {
   tokenHash      String    @unique
   tokenExpiresAt DateTime
   usedAt         DateTime?
-  action         String    // approve, dismiss
+  action         String    // pending until the link is clicked, then approve or dismiss
   createdAt      DateTime  @default(now())
 
   @@index([incidentId])
