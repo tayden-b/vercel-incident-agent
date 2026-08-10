@@ -14,19 +14,26 @@ is to make it trustworthy, not bigger.
 
 ## Next up
 
-- [ ] Screenshots (or a short GIF) of the incident dashboard and the alert
-      email in the README — this project demos visually or not at all.
+- [ ] Feed recent deploy/commit context into the LLM analysis so root-cause
+      suggestions can point at the change that likely broke things.
 
 ## Later
 
-- [ ] Feed recent deploy/commit context into the LLM analysis so root-cause
-      suggestions can point at the change that likely broke things.
 - [ ] Multi-project support (poll several Vercel projects, tag incidents).
 - [ ] Track LLM analysis accuracy: was the suggested fix right? A simple
       thumbs up/down on resolved incidents.
 
 ## Done
 
+- [x] Screenshots in the README: the dashboard, an incident with its LLM
+      analysis, and the alert email with the approve/dismiss links
+      (`docs/screenshots/`). Static PNGs rather than a GIF — the loop is
+      three states, not motion, and a GIF costs more to keep current. Getting a
+      dashboard worth showing meant `seed-incident.js` needed more than one row,
+      so it now seeds three incidents across P0/P1/P2 and open/notified/dismissed.
+      Everything is fixture data — `prisma db push` then `node seed-incident.js`
+      reproduces the exact screenshots with no Vercel token and no LLM key.
+      (2026-08-10)
 - [x] Hardened the action tokens. Minting and redemption moved out of the two
       route handlers into `src/lib/approval-token.ts`, so they test without the
       Prisma client (same trick as `signature.ts`). The expiry and single-use

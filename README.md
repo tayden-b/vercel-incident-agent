@@ -14,6 +14,29 @@ This project solves the "on-call" problem for solo developers. Instead of manual
 *   **Human-in-the-Loop**: Sends a formatted email with a "Redeploy" button. No need to open the Vercel dashboard.
 *   **Secure Actions**: Email links use hashed, single-use tokens to trigger API actions safely.
 
+## What It Looks Like
+
+The dashboard after a poll — open count, and the incidents the de-duplication
+grouped out of the raw log lines:
+
+![Incident dashboard](docs/screenshots/dashboard.png)
+
+Opening one shows the LLM analysis (summary, ranked likely causes with
+confidence, recommended next steps), the log lines that triggered it, and the
+approve/dismiss buttons:
+
+![Incident detail with LLM analysis](docs/screenshots/incident.png)
+
+That same analysis goes out as the alert email. The two buttons are the
+single-use token links — clicking Approve triggers the redeploy without opening
+Vercel:
+
+![Alert email with approve and dismiss links](docs/screenshots/email.png)
+
+These are from seeded fixture data, not a live outage: run `node seed-incident.js`
+after `prisma db push` and you get the same three incidents locally, no Vercel
+token or LLM key needed.
+
 ## Architecture
 
 1.  **Ingestion**: A Next.js API route (`/api/cron/poll-logs`) fetches recent logs from Vercel.
@@ -52,6 +75,11 @@ This project solves the "on-call" problem for solo developers. Instead of manual
     npx prisma db push
     ```
     This writes `prisma/dev.db` locally. Re-run it after any schema change.
+    To see the UI with data before you have a real incident, seed the fixtures:
+    ```bash
+    node seed-incident.js
+    ```
+    It wipes the incident tables and inserts the three incidents shown above.
 
 4.  **Run Locally**:
     ```bash
