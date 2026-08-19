@@ -1,8 +1,8 @@
 # incident-agent
 
-**Live demo: [vercel-incident-agent.vercel.app](https://vercel-incident-agent.vercel.app)** — inject a scenario, hit *Run investigation*, watch the agents work.
+[vercel-incident-agent.vercel.app](https://vercel-incident-agent.vercel.app)** 
 
-Multi-agent incident response for Vercel deployments. When a production incident fires, a triage agent scopes it, one diagnosis agent per hypothesis investigates concurrently, and a resolution agent synthesizes a root cause and proposes remediation — which a human approves or rejects. Every step streams live into an incident war room.
+Multi-agent incident response for Vercel deployments. When a production incident fires, a triage agent scopes it, one diagnosis agent per hypothesis investigates concurrently, and a resolution agent synthesizes a root cause and proposes remediation, which a human approves or rejects. Every step streams live into an incident war room.
 
 ![War room: triage, three concurrent diagnosis agents, resolution, and the RCA with an executed action](docs/war-room.png)
 
