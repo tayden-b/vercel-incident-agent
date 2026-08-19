@@ -2,6 +2,10 @@
 
 Multi-agent incident response for Vercel deployments. When a production incident fires, a triage agent scopes it, one diagnosis agent per hypothesis investigates concurrently, and a resolution agent synthesizes a root cause and proposes remediation — which a human approves or rejects. Every step streams live into an incident war room.
 
+![War room: triage, three concurrent diagnosis agents, resolution, and the RCA with an executed action](docs/war-room.png)
+
+The run above is the upstream-degradation scenario end to end: triage produced three hypotheses, one diagnosis agent confirmed the upstream outage while two ruled out the alternatives, and the resolution agent rejected a rollback (with reasons) in favor of a cache-fallback flag a human then approved.
+
 ## How an investigation runs
 
 ```
