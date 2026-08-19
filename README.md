@@ -1,65 +1,77 @@
-# Vercel Incident Agent
+# incident-agent
 
-An autonomous DevOps agent that monitors Vercel deployments, analyzes runtime errors using AI, and facilitates one-click fixes via secure email loops.
+Multi-agent incident response for Vercel deployments. When a production incident fires, a triage agent scopes it, one diagnosis agent per hypothesis investigates concurrently, and a resolution agent synthesizes a root cause and proposes remediation — which a human approves or rejects. Every step streams live into an incident war room.
 
-![Dashboard Preview](dashboard_preview.png)
-*(Note: You can add a screenshot here if you have one, or remove this line)*
+## How an investigation runs
 
-## Overview
+```
+incident detected
+      │
+      ▼
+┌─────────────┐   scopes severity + blast radius,
+│   triage    │   produces 2-3 distinct hypotheses
+└─────────────┘
+      │ fan out, one agent per hypothesis
+      ├───────────────┬───────────────┐
+      ▼               ▼               ▼
+┌───────────┐   ┌───────────┐   ┌───────────┐
+│ diagnosis │   │ diagnosis │   │ diagnosis │   run concurrently;
+│    #1     │   │    #2     │   │    #3     │   confirm or rule out
+└───────────┘   └───────────┘   └───────────┘   with cited evidence
+      └───────────────┴───────────────┘
+                      ▼
+              ┌──────────────┐   synthesizes root cause,
+              │  resolution  │   proposes + rejects actions
+              └──────────────┘
+                      ▼
+              human approves / rejects   ← the only write path
+```
 
-This project solves the "on-call" problem for solo developers. Instead of manually digging through logs when things break, this agent acts as a always-on SRE team member. It detects critical issues in real-time, diagnoses them using LLMs, and presents you with a clear solution.
+Each agent is the same loop: a role prompt, a set of read-only investigation tools (`query_logs`, `log_stats`, `get_deploy_diff`, `get_env`, `get_metrics`, `check_upstreams`, …), and a required `submit_report` tool whose Zod schema enforces the role's output shape. The loop ends when the agent submits. Diagnosis agents genuinely run in parallel (`Promise.all` over independent tool loops), and every reasoning step, tool call, and tool result streams to the war room over SSE while also being persisted — reload the page mid-investigation and it reconstructs from the database.
 
-### Key Features
+Ruling a hypothesis *out* is treated as a first-class result. The upstream-degradation scenario exists specifically to show the pipeline deciding that a rollback would do nothing and rejecting it, with reasons, in favor of a cache-fallback flag.
 
-*   **Autopilot Monitoring**: Polls Vercel runtime logs for 500-level errors on a cron schedule.
-*   **Intelligent De-duplication**: Groups thousands of log lines into distinct "Incidents" based on error signatures.
-*   **AI Root Cause Analysis**: Uses GPT-4o-mini to analyze stack traces and suggest specific fixes (e.g., "Increase DB connection limit").
-*   **Human-in-the-Loop**: Sends a formatted email with a "Redeploy" button. No need to open the Vercel dashboard.
-*   **Secure Actions**: Email links use hashed, single-use tokens to trigger API actions safely.
+## What's real and what's synthetic
 
-## Architecture
+The agents, tools, streaming, persistence, and approval flow are real. The incidents are synthetic: a scenario is a fixture with a realistic log corpus (~60-70 lines with noise), a deploy diff, env state, metrics, and upstream statuses. The investigation tools read from the scenario in demo mode; the agents don't know the difference and the ground truth is never exposed to them. This keeps the demo reproducible and free of a dependency on a production app that's actually on fire.
 
-1.  **Ingestion**: A Next.js API route (`/api/cron/poll-logs`) fetches recent logs from Vercel.
-2.  **Processing**: Logs are structured, hashed, and stored in a SQLite database via Prisma.
-3.  **Analysis**: New incidents trigger an LLM analysis job.
-4.  **Notification**: The system generates an HTML report and emails it via Gmail API.
-5.  **Resolution**: The developer clicks a link to approve the fix, triggering a Vercel redeploy via API.
+Three scenarios ship today:
 
-## Tech Stack
+| Scenario | Root cause | What it demonstrates |
+|---|---|---|
+| Env var regression | Code renamed an env var; project settings didn't | Deploy-correlated config failure; env fix beats rollback |
+| Connection pool exhaustion | Refactor created a DB client per request | Gradual degradation under load; diff reading |
+| Upstream API degradation | Third-party API is down; no deploy involved | Knowing when **not** to roll back |
 
-*   **Core**: Next.js 14 (App Router), TypeScript
-*   **Database**: SQLite + Prisma ORM
-*   **AI**: OpenAI API
-*   **Integrations**: Vercel SDK, Googleapis (Gmail)
-*   **UI**: Tailwind CSS, Lucide Icons
+## Running it
 
-## Setup
+```bash
+npm install
+npx drizzle-kit push        # creates local.db
+echo "ANTHROPIC_API_KEY=sk-ant-..." > .env
+npm run dev
+```
 
-1.  **Clone & Install**:
-    ```bash
-    git clone https://github.com/tayden-b/vercel-incident-agent.git
-    cd vercel-incident-agent
-    npm install
-    ```
+Inject a scenario from the dashboard, open the incident, hit *Run investigation*.
 
-2.  **Environment Variables**:
-    Copy `.env.example` to `.env` and fill in your keys:
-    *   `VERCEL_TOKEN` & `VERCEL_PROJECT_ID`: For log access.
-    *   `LLM_API_KEY`: OpenAI key.
-    *   `GMAIL_CLIENT_ID` etc.: For sending emails (optional, console logs used as fallback).
+Works with either provider: `ANTHROPIC_API_KEY` (default model `claude-haiku-4-5`) or `OPENAI_API_KEY` (default `gpt-4o-mini`); override with `AGENT_MODEL`. There's also an end-to-end smoke test that runs the full pipeline headless and prints the event stream:
 
-3.  **Run Locally**:
-    ```bash
-    npm run dev
-    ```
-    The cron job can be triggered manually at `http://localhost:3000/api/cron/poll-logs`.
+```bash
+npx tsx scripts/smoke.ts upstream-degradation
+```
 
-## Database
+## Stack
 
-This project uses a local SQLite database for simplicity.
-*   `npx prisma studio`: View the data.
-*   `npx prisma db push`: Sync schema changes.
+Next.js (App Router) · Vercel AI SDK (`streamText` tool loops) · Drizzle + libSQL (SQLite locally, Turso in production) · Tailwind. Deploys on Vercel; the investigation route sets `maxDuration = 300` and streams for the life of the pipeline.
 
-## License
+## Design notes
 
-MIT
+- **Structured output via a submit tool, not JSON parsing.** Each agent must call `submit_report`; the report schema is validated at the tool-call layer, so a malformed report is retried by the model rather than crashing the pipeline.
+- **Events are the source of truth for the UI.** The orchestrator emits typed events; the SSE stream and the database both consume them. A dropped connection loses liveness, not data.
+- **Agents propose, humans dispose.** No action executes without explicit approval through the UI. In demo mode, execution runs against the scenario sandbox and is labeled as such.
+- **Scenario ground truth is held out** for eval scoring — the fixture knows the correct action kind, the agents never see it.
+
+## Next
+
+- Live mode: ingest real Vercel runtime logs (the tool interface is already source-agnostic)
+- Eval harness scoring diagnosis verdicts and chosen actions against scenario ground truth

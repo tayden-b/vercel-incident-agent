@@ -1,6 +1,6 @@
 import { tool } from "ai";
 import { z } from "zod";
-import { and, asc, eq, like, sql } from "drizzle-orm";
+import { and, eq, like, sql } from "drizzle-orm";
 import { db } from "@/lib/db/client";
 import { logEvents, type Incident } from "@/lib/db/schema";
 import type { Scenario } from "@/lib/scenarios";
