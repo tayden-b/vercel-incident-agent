@@ -41,5 +41,7 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
-local.db
-local.db-journal
+
+# local sqlite database (created by `npx drizzle-kit push`)
+*.db
+*.db-journal
