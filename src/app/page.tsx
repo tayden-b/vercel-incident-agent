@@ -1,157 +1,82 @@
-'use client';
+import Link from "next/link";
+import { desc } from "drizzle-orm";
+import { db } from "@/lib/db/client";
+import { incidents } from "@/lib/db/schema";
+import { SeverityBadge, StatusBadge } from "@/components/badges";
+import { ScenarioLauncher } from "@/components/scenario-launcher";
+import { timeAgo } from "@/lib/format";
 
-import { useState, useEffect } from 'react';
-import Link from 'next/link';
-import { AlertCircle, Clock, RefreshCw, Layers, Shield } from 'lucide-react';
+export const dynamic = "force-dynamic";
 
-export default function Dashboard() {
-  const [incidents, setIncidents] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [polling, setPolling] = useState(false);
-
-  async function fetchIncidents() {
-    setLoading(true);
-    try {
-      const res = await fetch('/api/incidents');
-      const data = await res.json();
-      setIncidents(data);
-    } catch (e) {
-      console.error(e);
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  async function runPoll() {
-    setPolling(true);
-    try {
-      await fetch('/api/poll-now', { method: 'POST' });
-      await fetchIncidents();
-    } catch (e) {
-      console.error(e);
-    } finally {
-      setPolling(false);
-    }
-  }
-
-  useEffect(() => {
-    fetchIncidents();
-  }, []);
-
-  const openIncidents = Array.isArray(incidents) ? incidents.filter(i => i.status === 'OPEN' || i.status === 'NOTIFIED') : [];
-  const lastIncident = Array.isArray(incidents) ? incidents[0] : null;
+export default async function Home() {
+  const rows = await db.select().from(incidents).orderBy(desc(incidents.createdAt)).limit(50);
 
   return (
-    <div className="min-h-screen bg-[#fafafa] text-[#171717] font-sans">
-      <nav className="border-b border-gray-200 bg-white sticky top-0 z-10">
-        <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
-          <div className="flex items-center space-x-2">
-            <Shield className="w-6 h-6 text-black" />
-            <span className="font-semibold text-lg">Incident Agent</span>
-          </div>
-          <div className="flex items-center space-x-4">
-            <button
-              onClick={runPoll}
-              disabled={polling}
-              className="px-4 py-2 bg-black text-white rounded-md text-sm font-medium hover:bg-gray-800 transition-colors disabled:opacity-50 flex items-center"
-            >
-              {polling ? <RefreshCw className="w-4 h-4 mr-2 animate-spin" /> : <RefreshCw className="w-4 h-4 mr-2" />}
-              {polling ? 'Polling...' : 'Run Poll Now'}
-            </button>
-          </div>
+    <div>
+      <div className="mb-5 flex items-end justify-between">
+        <div>
+          <h1 className="text-lg font-semibold tracking-tight">Incidents</h1>
+          <p className="mt-1 text-[13px] text-[#888]">
+            Inject a scenario, then watch triage, parallel diagnosis, and resolution agents work it.
+          </p>
         </div>
-      </nav>
+        <ScenarioLauncher />
+      </div>
 
-      <main className="max-w-6xl mx-auto px-4 py-8">
-        <header className="mb-8">
-          <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
-          <p className="text-gray-500">Overview of your Vercel project health</p>
-        </header>
-
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-12">
-          <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm transition-all hover:shadow-md">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-sm font-medium text-gray-500 uppercase tracking-wider">Open Incidents</span>
-              <AlertCircle className="w-4 h-4 text-red-500" />
-            </div>
-            <div className="text-3xl font-bold">{openIncidents.length}</div>
-          </div>
-          <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm transition-all hover:shadow-md">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-sm font-medium text-gray-500 uppercase tracking-wider">Total Detected</span>
-              <Layers className="w-4 h-4 text-blue-500" />
-            </div>
-            <div className="text-3xl font-bold">{incidents.length}</div>
-          </div>
-          <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm transition-all hover:shadow-md">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-sm font-medium text-gray-500 uppercase tracking-wider">Last Poll</span>
-              <Clock className="w-4 h-4 text-gray-400" />
-            </div>
-            <div className="text-sm font-medium truncated">
-              {lastIncident ? new Date(lastIncident.lastSeenAt).toLocaleString() : 'N/A'}
-            </div>
-          </div>
-          <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm transition-all hover:shadow-md">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-sm font-medium text-gray-500 uppercase tracking-wider">Project ID</span>
-              <Shield className="w-4 h-4 text-gray-400" />
-            </div>
-            <div className="text-sm font-mono truncate">{process.env.NEXT_PUBLIC_VERCEL_PROJECT_ID || 'Configured in ENV'}</div>
-          </div>
+      {rows.length === 0 ? (
+        <div className="rounded border border-dashed border-[#333] px-6 py-14 text-center">
+          <p className="text-[13px] text-[#aaa]">No incidents yet.</p>
+          <p className="mx-auto mt-2 max-w-md text-[12px] leading-relaxed text-[#666]">
+            This demo runs on synthetic incident scenarios — realistic log corpora, deploy diffs, and
+            upstream statuses. The agents investigating them are real LLM tool loops. Use{" "}
+            <span className="font-mono text-[11px] text-[#999]">Inject incident</span> to start one.
+          </p>
         </div>
-
-        <section>
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-semibold">Recent Incidents</h2>
-            <Link href="/incidents" className="text-sm font-medium text-blue-600 hover:text-blue-700">
-              View all
-            </Link>
-          </div>
-
-          <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-            {loading ? (
-              <div className="p-12 text-center text-gray-500">Loading incidents...</div>
-            ) : Array.isArray(incidents) && incidents.length === 0 ? (
-              <div className="p-12 text-center text-gray-500">No incidents detected yet. Good job!</div>
-            ) : !Array.isArray(incidents) ? (
-              <div className="p-12 text-center text-red-500">Failed to load incidents.</div>
-            ) : (
-              <div className="divide-y divide-gray-100">
-                {incidents.slice(0, 5).map((incident: any) => (
-                  <Link key={incident.id} href={`/incidents/${incident.id}`} className="block p-5 hover:bg-gray-50 transition-colors">
-                    <div className="flex items-start justify-between">
-                      <div className="space-y-1">
-                        <div className="flex items-center space-x-2">
-                          <span className={`px-2 py-0.5 text-[10px] font-bold rounded-full uppercase ${incident.status === 'OPEN' || incident.status === 'NOTIFIED' ? 'bg-red-100 text-red-700' :
-                              incident.status === 'REDEPLOY_TRIGGERED' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'
-                            }`}>
-                            {incident.status}
-                          </span>
-                          <span className={`px-2 py-0.5 text-[10px] font-bold rounded-full uppercase ${incident.severity === 'P0' ? 'bg-red-600 text-white' :
-                              incident.severity === 'P1' ? 'bg-orange-500 text-white' : 'bg-blue-500 text-white'
-                            }`}>
-                            {incident.severity}
-                          </span>
-                        </div>
-                        <h3 className="font-semibold text-base truncate max-w-xl">{incident.title}</h3>
-                        <p className="text-sm font-sans text-gray-500 flex items-center">
-                          <Clock className="w-3 h-3 mr-1" />
-                          Last seen {new Date(incident.lastSeenAt).toLocaleString()}
-                        </p>
-                      </div>
-                      <div className="text-right">
-                        <div className="text-lg font-bold">{incident.eventCount}</div>
-                        <div className="text-[10px] text-gray-400 uppercase font-medium">Events</div>
-                      </div>
-                    </div>
-                  </Link>
-                ))}
-              </div>
-            )}
-          </div>
-        </section>
-      </main>
+      ) : (
+        <div className="overflow-hidden rounded border border-[#262626]">
+          <table className="w-full border-collapse text-left">
+            <thead>
+              <tr className="border-b border-[#262626] bg-[#111] font-mono text-[11px] text-[#777]">
+                <th className="px-3 py-2 font-medium">sev</th>
+                <th className="px-3 py-2 font-medium">incident</th>
+                <th className="hidden px-3 py-2 font-medium sm:table-cell">route</th>
+                <th className="px-3 py-2 font-medium">status</th>
+                <th className="hidden px-3 py-2 text-right font-medium sm:table-cell">events</th>
+                <th className="px-3 py-2 text-right font-medium">created</th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((incident) => (
+                <tr key={incident.id} className="border-b border-[#1a1a1a] last:border-0 hover:bg-[#111]">
+                  <td className="px-3 py-2.5">
+                    <SeverityBadge severity={incident.severity} />
+                  </td>
+                  <td className="max-w-md px-3 py-2.5">
+                    <Link
+                      href={`/incidents/${incident.id}`}
+                      className="block truncate text-[13px] font-medium hover:underline"
+                    >
+                      {incident.title}
+                    </Link>
+                  </td>
+                  <td className="hidden px-3 py-2.5 font-mono text-[12px] text-[#888] sm:table-cell">
+                    {incident.route}
+                  </td>
+                  <td className="px-3 py-2.5">
+                    <StatusBadge status={incident.status} />
+                  </td>
+                  <td className="hidden px-3 py-2.5 text-right font-mono text-[12px] text-[#888] sm:table-cell">
+                    {incident.eventCount}
+                  </td>
+                  <td className="px-3 py-2.5 text-right font-mono text-[12px] text-[#888]">
+                    {timeAgo(incident.createdAt)}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
     </div>
   );
 }

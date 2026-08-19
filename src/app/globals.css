@@ -1,26 +1,37 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+@theme {
+  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, "SF Mono", monospace;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+::selection {
+  background: #333;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+/* thin scrollbars for log/step panes */
+.pane-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: #333 transparent;
+}
+.pane-scroll::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+.pane-scroll::-webkit-scrollbar-thumb {
+  background: #333;
+  border-radius: 3px;
+}
+
+@keyframes pulse-dot {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.35;
   }
 }
-
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+.live-dot {
+  animation: pulse-dot 1.4s ease-in-out infinite;
 }
