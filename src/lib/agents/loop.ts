@@ -1,4 +1,4 @@
-import { hasToolCall, stepCountIs, streamText, tool, type ToolSet } from "ai";
+import { generateText, hasToolCall, stepCountIs, streamText, tool, type ToolSet } from "ai";
 import { z } from "zod";
 import type { ResolvedModel } from "./model";
 import type { InvestigationEmitter } from "./events";
@@ -81,6 +81,34 @@ export async function runAgentLoop<S extends z.ZodType>(opts: {
       case "error":
         throw part.error instanceof Error ? part.error : new Error(String(part.error));
     }
+  }
+
+  // An agent can burn its step budget investigating without ever calling
+  // submit_report. Rather than failing the run, force one final call that can
+  // only submit, based on the evidence it already gathered.
+  if (!submitted) {
+    await emitter.emit({
+      type: "step",
+      runId,
+      stepType: "reasoning",
+      payload: { text: "(step budget reached — forcing report submission from gathered evidence)" },
+    });
+    const { messages } = await result.response;
+    await generateText({
+      model: opts.resolved.model,
+      system: opts.system,
+      messages: [
+        { role: "user", content: opts.prompt },
+        ...messages,
+        {
+          role: "user",
+          content:
+            "You have hit your step budget. Call submit_report now with your best conclusions from the evidence you already gathered. If the evidence is insufficient, submit with an appropriately low confidence or an 'inconclusive' verdict rather than guessing.",
+        },
+      ],
+      tools: { submit_report: submitReport },
+      toolChoice: { type: "tool", toolName: "submit_report" },
+    });
   }
 
   if (!submitted) throw new AgentDidNotSubmitError(role);
