@@ -45,3 +45,6 @@ next-env.d.ts
 # local sqlite database (created by `npx drizzle-kit push`)
 *.db
 *.db-journal
+
+# local tooling
+.claude/
